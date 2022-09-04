@@ -38,16 +38,16 @@ DEFAULT_ENCODING = "UTF-8"
 DEFAULT_ERROR = "ignore"
 
 def setflag(self, name, value):
-    if not(name in self.OPTIONFLAGS_BY_NAME):
-      self.register_optionflag(name)
+    if name not in self.OPTIONFLAGS_BY_NAME:
+        self.register_optionflag(name)
     if value == True:
       self.optionflags |= self.OPTIONFLAGS_BY_NAME[name]
     else:
       self.optionflags &= ~self.OPTIONFLAGS_BY_NAME[name]
 
 def getflag(self, name):
-    if not(name in self.OPTIONFLAGS_BY_NAME):
-      raise KeyError(str(name)+" is not a registered key.")
+    if name not in self.OPTIONFLAGS_BY_NAME:
+        raise KeyError(f"{str(name)} is not a registered key.")
     return ((self.optionflags & self.OPTIONFLAGS_BY_NAME[name]) != 0)
 
 def register_optionflag(self,name):
@@ -60,8 +60,8 @@ def ya_add_method(_class, function, method_name=None, clsmethod=False, noinstanc
     possible to use functions in this module. Also keeps the
     docstring"""
 
-    if method_name == None:
-      method_name = function.__name__
+    if method_name is None:
+        method_name = function.__name__
 
     setattr(gnucash.gnucash_core_c,function.__name__,function)
     if clsmethod:
@@ -96,17 +96,17 @@ class ClassWithCutting__format__():
 
             def remove_alignment(fmt_spec):
                 if fmt_spec[1] in ["<","^",">"]:
-                    fmt_spec=fmt_spec[2:len(fmt_spec)]
+                    fmt_spec = fmt_spec[2:]
                 return fmt_spec
 
             def remove_sign(fmt_spec):
                 if fmt_spec[0] in ["-","+"," "]:
-                    fmt_spec=fmt_spec[1:len(fmt_spec)]
+                    fmt_spec = fmt_spec[1:]
                 return fmt_spec
 
             def remove_cross(fmt_spec):
                 if fmt_spec[0] in ["#"]:
-                    fmt_spec=fmt_spec[1:len(fmt_spec)]
+                    fmt_spec = fmt_spec[1:]
                 return fmt_spec
 
             def do_width(fmt_spec):
@@ -114,14 +114,11 @@ class ClassWithCutting__format__():
 
                 while len(fmt_spec)>0:
                     if fmt_spec[0].isdigit():
-                      n+=fmt_spec[0]
-                      fmt_spec=fmt_spec[1:len(fmt_spec)]
+                        n+=fmt_spec[0]
+                        fmt_spec = fmt_spec[1:]
                     else:
                         break
-                if n:
-                    return int(n)
-                else:
-                    return None
+                return int(n) if n else None
 
             if len(fmt_spec)>=2:
                 fmt_spec=remove_alignment(fmt_spec)
@@ -141,8 +138,8 @@ class ClassWithCutting__format__():
 
             if len(s)>width:
                 if len(replace_string)>width:
-                    replace_string=replace_string[0:width]
-                s=s[0:width-len(replace_string)]
+                    replace_string = replace_string[:width]
+                s = s[:width-len(replace_string)]
                 s=s+replace_string
 
             return s
@@ -168,30 +165,16 @@ class ClassWithCutting__format__():
 def all_as_classwithcutting__format__(*args):
     """Converts every argument to instance of ClassWithCutting__format__"""
 
-    #import types
-    l=[]
-    for a in args:
-        #if type(a) in [types.StringType, types.UnicodeType]:
-        #  a=a.decode("UTF-8")
-        l.append(ClassWithCutting__format__(a))
-
-    return l
+    return [ClassWithCutting__format__(a) for a in args]
 
 def all_as_classwithcutting__format__keys(encoding=None, error=None, **keys):
     """Converts every argument to instance of ClassWithCutting__format__"""
 
-    #import types
-    d={}
-    if encoding==None:
-      encoding=DEFAULT_ENCODING
-    if error==None:
-      error=DEFAULT_ERROR
-    for a in keys:
-        #if isinstance(keys[a], str):
-        #  keys[a]=keys[a].decode(encoding,error)
-        d[a]=ClassWithCutting__format__(keys[a])
-
-    return d
+    if encoding is None:
+        encoding=DEFAULT_ENCODING
+    if error is None:
+        error=DEFAULT_ERROR
+    return {a: ClassWithCutting__format__(keys[a]) for a in keys}
 
 
 
@@ -210,10 +193,7 @@ def __split__str__(self, encoding=None, error=None):
 
     from gnucash import Split
     import time
-    #self=Split(instance=self)
-
-    lot=self.GetLot()
-    if lot:
+    if lot := self.GetLot():
         if type(lot).__name__ == 'SwigPyObject':
           lot=gnucash.GncLot(instance=lot)
         lot_str=lot.get_title()
@@ -241,7 +221,7 @@ def __split__str__(self, encoding=None, error=None):
             "Transaction: {transaction_time:30} "+
             "- {transaction2:30} "+
             "Lot: {lot:10}")
-        fmt_dict.update(fmt_t_dict)
+        fmt_dict |= fmt_t_dict
         fmt_str += fmt_t_str
 
     return fmt_str.format(**all_as_classwithcutting__format__keys(encoding,error,**fmt_dict))
@@ -268,7 +248,7 @@ def __transaction__str__(self):
 
     splits_str=""
     for n,split in enumerate(self.GetSplitList()):
-        if not (type(split)==gnucash.Split):
+        if type(split) != gnucash.Split:
             split=gnucash.Split(instance=split)
 
         transaction_flag = split.getflag("PRINT_TRANSACTION")
@@ -311,9 +291,9 @@ def __invoice__str__(self):
     ret_entries=""
     entry_list = self.GetEntries()
     for entry in entry_list: # Type of entry has to be checked
-      if not(type(entry)==Entry):
-        entry=Entry(instance=entry)
-      ret_entries += "  "+str(entry)+"\n"
+        if type(entry) != Entry:
+            entry=Entry(instance=entry)
+        ret_entries += f"  {str(entry)}" + "\n"
 
     return ret_invoice+"\n"+ret_entries
 

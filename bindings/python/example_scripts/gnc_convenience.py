@@ -22,20 +22,20 @@ def get_transaction_list(account):
     account:    Account to get transactions from.
     
     """
-    
+
     split_list=account.GetSplitList()
     transaction_list=[]
     for split in split_list:
         if type(split) != Split:
               split = Split(instance=split)
         transaction=split.GetParent()
-        if not (transaction in transaction_list):       # this check may not be necessary.
-          transaction_list.append(transaction)
+        if transaction not in transaction_list:       # this check may not be necessary.
+            transaction_list.append(transaction)
     return transaction_list
 
 
 def get_splits_without_lot(account=None,split_list=None):
-  """Returns a list of those Splits in split_list or account which do not have an according lot.
+    """Returns a list of those Splits in split_list or account which do not have an according lot.
 
   options:
 
@@ -45,20 +45,20 @@ def get_splits_without_lot(account=None,split_list=None):
   one or the other has to be provided.
 
   """
-  if split_list==None:
-      if account==None:
-          return []
-      else:
-          split_list=account.GetSplitList()
-  
-  rlist=[]
-  for split in split_list:
-      if type(split).__name__ == 'SwigPyObject':
-          split = Split(instance=split) 
-      lot=split.GetLot()
-      if lot == None:
-          rlist.append(split)
-  return rlist
+    if split_list is None:
+        if account is None:
+            return []
+        else:
+            split_list=account.GetSplitList()
+
+    rlist=[]
+    for split in split_list:
+        if type(split).__name__ == 'SwigPyObject':
+            split = Split(instance=split)
+        lot=split.GetLot()
+        if lot is None:
+            rlist.append(split)
+    return rlist
 
 
 def find_account(account,name,account_list=None):
@@ -147,10 +147,10 @@ def find_split_recursive(account, search_string):
   search_string:  String to search for.
   
   """
-  
+
   rlist = []
   child_account_splits = []
-  
+
   # Get all splits in descendants
   for child in account.get_children():
       if type(child) != Account:
@@ -196,19 +196,19 @@ def find_transaction(account,name,ignore_case=True,transaction_list=None):
 
   for transaction in transaction_list:
       found = False
-      
+
       desc=transaction.GetDescription()
       if ignore_case:
           desc=desc.lower()
-      
+
       if name in desc:
           found=True
-      
+
       sl=transaction.GetSplitList()
       for split in sl:
           if type(split) != Split:
               split=Split(instance=split)
-          
+
           memo = split.GetMemo()
           if ignore_case:
               memo=memo.lower()

@@ -87,40 +87,44 @@ from datetime import date
 OPENING_DATE = (1, 1, 2011) # day, month, year
 
 # possible account types of interest for opening balances
-ACCOUNT_TYPES_TO_OPEN = set( (
-        ACCT_TYPE_BANK,
-        ACCT_TYPE_CASH,
-        ACCT_TYPE_CREDIT,
-        ACCT_TYPE_ASSET,
-        ACCT_TYPE_LIABILITY,
-        ACCT_TYPE_STOCK,
-        ACCT_TYPE_MUTUAL,
-        ACCT_TYPE_INCOME,
-        ACCT_TYPE_EXPENSE,
-        ACCT_TYPE_EQUITY,
-        ACCT_TYPE_RECEIVABLE,
-        ACCT_TYPE_PAYABLE,
-        ACCT_TYPE_TRADING,
-))
+ACCOUNT_TYPES_TO_OPEN = {
+    ACCT_TYPE_BANK,
+    ACCT_TYPE_CASH,
+    ACCT_TYPE_CREDIT,
+    ACCT_TYPE_ASSET,
+    ACCT_TYPE_LIABILITY,
+    ACCT_TYPE_STOCK,
+    ACCT_TYPE_MUTUAL,
+    ACCT_TYPE_INCOME,
+    ACCT_TYPE_EXPENSE,
+    ACCT_TYPE_EQUITY,
+    ACCT_TYPE_RECEIVABLE,
+    ACCT_TYPE_PAYABLE,
+    ACCT_TYPE_TRADING,
+}
+
 
 # You don't need an opening balance for income and expenses, past income
 # and expenses should be in Equity->retained earnings
 # so we remove them from the above set
-ACCOUNT_TYPES_TO_OPEN = ACCOUNT_TYPES_TO_OPEN.difference( set((
-            ACCT_TYPE_INCOME,
-            ACCT_TYPE_EXPENSE,
-            )) )
+ACCOUNT_TYPES_TO_OPEN = ACCOUNT_TYPES_TO_OPEN.difference(
+    {ACCT_TYPE_INCOME, ACCT_TYPE_EXPENSE}
+)
+
 
 # This script isn't capable of properly creating the lots required for
 # STOCK, MUTUAL, RECEIVABLE, and PAYABLE -- you'll have to create opening
 # balances for them manually; so they are not included in the set for
 # opening balances
-ACCOUNT_TYPES_TO_OPEN = ACCOUNT_TYPES_TO_OPEN.difference( set((
-            ACCT_TYPE_STOCK,
-            ACCT_TYPE_MUTUAL,
-            ACCT_TYPE_RECEIVABLE,
-            ACCT_TYPE_PAYABLE,
-            )) )
+ACCOUNT_TYPES_TO_OPEN = ACCOUNT_TYPES_TO_OPEN.difference(
+    {
+        ACCT_TYPE_STOCK,
+        ACCT_TYPE_MUTUAL,
+        ACCT_TYPE_RECEIVABLE,
+        ACCT_TYPE_PAYABLE,
+    }
+)
+
 
 # this script isn't capable of properly setting up the transactions for
 # ACCT_TYPE_TRADING, you'll have to create opening balances for them manually;
@@ -163,7 +167,7 @@ def record_opening_balance(original_account, new_account, new_book,
             new_total = total.sub(
                 final_balance,
                 GNC_DENOM_AUTO, GNC_HOW_DENOM_EXACT )
-            
+
             initialize_split(
                 new_book,
                 final_balance,
@@ -188,15 +192,17 @@ def recursivly_build_account_tree(original_parent_account,
         for attribute in ('Name', 'Type', 'Description', 'Notes',
                           'Code', 'TaxRelated', 'Placeholder'):
             # new_account.SetAttribute( original_account.GetAttribute() )
-            getattr(new_account, 'Set' + attribute)(
-                getattr(original_account, 'Get' + attribute)() )
+            getattr(new_account, f'Set{attribute}')(
+                getattr(original_account, f'Get{attribute}')()
+            )
+
 
         # copy commodity
         orig_commodity = original_account.GetCommodity()
         namespace = orig_commodity.get_namespace()
         mnemonic = orig_commodity.get_mnemonic()
         new_commodity = new_commodity_table.lookup(namespace, mnemonic)
-        if new_commodity == None:
+        if new_commodity is None:
             new_commodity = orig_commodity.clone(new_book)
             new_commodity_table.insert(new_commodity)
         new_account.SetCommodity(new_commodity)
@@ -215,36 +221,33 @@ def recursivly_build_account_tree(original_parent_account,
 
 def reconstruct_account_name_with_mnemonic(account_tuple, mnemonic):
     opening_balance_account_pieces = list(account_tuple)
-    opening_balance_account_pieces[
-        len(opening_balance_account_pieces) - 1 ] += " - " + mnemonic    
+    opening_balance_account_pieces[-1] += f" - {mnemonic}"
     return opening_balance_account_pieces
 
 def find_or_make_account(account_tuple, root_account, book,
                          currency ):
     current_account_name, account_path = account_tuple[0], account_tuple[1:]
     current_account = root_account.lookup_by_name(current_account_name)
-    if current_account == None:
+    if current_account is None:
         current_account = Account(book)
         current_account.SetName(current_account_name)
         current_account.SetCommodity(currency)
         root_account.append_child(current_account)
-    
+
     if len(account_path) > 0:
         return find_or_make_account(account_path, current_account, book,
                                     currency)
-    else:
-        account_commod = current_account.GetCommodity()
-        if (account_commod.get_mnemonic(),
-            account_commod.get_namespace() ) == \
-            (currency.get_mnemonic(),
-             currency.get_namespace()) :
-            return current_account
-        else:
-            return None
+    account_commod = current_account.GetCommodity()
+    return (
+        current_account
+        if (account_commod.get_mnemonic(), account_commod.get_namespace())
+        == (currency.get_mnemonic(), currency.get_namespace())
+        else None
+    )
 
 def choke_on_none_for_no_account(opening_account, extra_string ):
-    if opening_account == None:
-        raise Exception("account currency and name mismatch, " + extra_string)
+    if opening_account is None:
+        raise Exception(f"account currency and name mismatch, {extra_string}")
 
 def create_opening_balance_transaction(commodtable, namespace, mnemonic,
                                        new_book_root, new_book,
@@ -266,7 +269,7 @@ def create_opening_balance_transaction(commodtable, namespace, mnemonic,
                                                new_book_root, new_book,
                                                currency )
         simple_opening_name_used = True
-        if opening_account == None:
+        if opening_account is None:
             account_pieces = reconstruct_account_name_with_mnemonic(
                 OPENING_BALANCE_ACCOUNT,
                 mnemonic)

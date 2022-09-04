@@ -16,14 +16,14 @@ def mark_account_with_code_as_tax_related(account, target_code):
     of account.
     Returns False when recursion fails to find it.
     """
-    if account.GetCode() == target_code:
-        account.SetTaxRelated(True)
-        return True
-    else:
-        for child in account.get_children():
-            if mark_account_with_code_as_tax_related(child, target_code):
-                return True
-        return False
+    if account.GetCode() != target_code:
+        return any(
+            mark_account_with_code_as_tax_related(child, target_code)
+            for child in account.get_children()
+        )
+
+    account.SetTaxRelated(True)
+    return True
 
 # Change this path to your own
 gnucash_session = Session("/home/mark/python-bindings-help/test.xac")

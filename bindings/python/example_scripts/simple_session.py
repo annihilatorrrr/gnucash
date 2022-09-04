@@ -21,7 +21,7 @@ except GnuCashBackendException as backend_exception:
 
 
 # create a new file, this requires a file type specification
-with Session("xml://%s" % FILE_2, SessionOpenMode.SESSION_NEW_STORE) as session:
+with Session(f"xml://{FILE_2}", SessionOpenMode.SESSION_NEW_STORE) as session:
     book = session.book
     root = book.get_root_account()
 

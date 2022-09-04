@@ -54,14 +54,14 @@ class Shell:
     def namespace(self):
         return self.globals
 
-    def is_balanced (self, line):
+    def is_balanced(self, line):
         """ Checks line balance for brace, bracket, parentheses and string quote
 
         This helper function checks for the balance of brace, bracket,
         parentheses and string quote. Any unbalanced line means to wait until
         some other lines are fed to the console.
         """
-        
+
         s = line
         s = list(filter(lambda x: x in '()[]{}"\'', s))
         # s = s.replace ("'''", "'")
@@ -70,38 +70,35 @@ class Shell:
         brackets = {'(':')', '[':']', '{':'}', '"':'"', '\'':'\''}
         stack = []
         while len(s):
-            if not instring:
-                if s[0] in ')]}':
-                    if stack and brackets[stack[-1]] == s[0]:
-                        del stack[-1]
-                    else:
-                        return False
-                elif s[0] in '"\'':
-                    if stack and brackets[stack[-1]] == s[0]:
-                        del stack[-1]
-                        instring = False
-                    else:
-                        stack.append(s[0])
-                        instring = True
-                else:
-                    stack.append(s[0])
-            else:
+            if instring:
                 if s[0] in '"\'' and stack and brackets[stack[-1]] == s[0]:
                     del stack[-1]
                     instring = False
+            elif s[0] in ')]}':
+                if stack and brackets[stack[-1]] == s[0]:
+                    del stack[-1]
+                else:
+                    return False
+            elif s[0] in '"\'':
+                if stack and brackets[stack[-1]] == s[0]:
+                    del stack[-1]
+                    instring = False
+                else:
+                    stack.append(s[0])
+                    instring = True
+            else:
+                stack.append(s[0])
             s = s[1:]
-        return len(stack) == 0
+        return not stack
         
 
     def complete(self, line):
         split_line = self.complete_sep.split(line)
         possibilities = []
         i = 0
-        c = self.completer.complete (split_line[-1], i)
-        while c:
+        while c := self.completer.complete(split_line[-1], i):
             possibilities.append(c)
-            i = i+1
-            c = self.completer.complete (split_line[-1], i)
+            i += 1
         if possibilities:
             common_prefix = os.path.commonprefix (possibilities)
             completed = line[:-len(split_line[-1])]+common_prefix
@@ -110,7 +107,7 @@ class Shell:
         return completed, possibilities
 
 
-    def eval (self, console):
+    def eval(self, console):
         line = console.last_line()
         console.write ('\n')
         if line == '':
@@ -125,11 +122,12 @@ class Shell:
             console.prompt('prompt')
             return
         line = line.rstrip()
-        if len(line) > 0:
-            if line[-1] == ':' or line[-1] == '\\' or line[0] in ' \11':
-                self.prompt = sys.ps2
-                console.prompt('prompt')
-                return
+        if len(line) > 0 and (
+            line[-1] == ':' or line[-1] == '\\' or line[0] in ' \11'
+        ):
+            self.prompt = sys.ps2
+            console.prompt('prompt')
+            return
         self.execute (console)
         self.command = ''
         self.prompt = sys.ps1

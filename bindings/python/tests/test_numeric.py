@@ -26,8 +26,7 @@ class TestGncNumeric(TestCase):
             GncNumeric((2**64)+1)
 
         #On Linux it raises an OverflowError while on MacOS it's a TypeError.
-        self.assertTrue(isinstance(context.exception, TypeError) or
-                        isinstance(context.exception, OverflowError))
+        self.assertTrue(isinstance(context.exception, (TypeError, OverflowError)))
 
     def test_from_float(self):
         num = GncNumeric(3.1, 20, GNC_HOW_DENOM_FIXED | GNC_HOW_RND_NEVER)

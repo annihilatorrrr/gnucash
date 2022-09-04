@@ -101,7 +101,7 @@ def main(argv=None):
                 print("listing invoices")
             if opt[0] in ["-P"]:
                 output_path = opt[1]
-                print("output path is", output_path + ".")
+                print("output path is", f"{output_path}.")
 
         # Check for correct input
         if len(args) > 1:
@@ -118,10 +118,13 @@ def main(argv=None):
                 raise Usage("No template given !")
 
         # Check for output file
-        if not (filename_output or filename_from_invoice):
-            if filename_template:
-                filename_output = filename_template + ".out"
-                print("no output filename given, will be:", filename_output)
+        if (
+            not filename_output
+            and not filename_from_invoice
+            and filename_template
+        ):
+            filename_output = f"{filename_template}.out"
+            print("no output filename given, will be:", filename_output)
 
     except Usage as err:
         if err.msg == "Help:":
@@ -176,7 +179,7 @@ def main(argv=None):
 
     if list_invoices:
         for number, invoice in enumerate(invoice_list):
-            print(str(number) + ")")
+            print(f"{str(number)})")
             print(invoice)
 
     if not (no_output):

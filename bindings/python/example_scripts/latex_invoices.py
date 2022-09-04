@@ -97,9 +97,9 @@ def invoice_to_lco(invoice):
 
         outstr = u""
         if uvalue.endswith("\n"):
-            uvalue = uvalue[0 : len(uvalue) - 1]
+            uvalue = uvalue[:-1]
 
-        if not ukey in [u"fromaddress", u"toaddress", u"date"]:
+        if ukey not in [u"fromaddress", u"toaddress", u"date"]:
             outstr += u"\\newkomavar{"
             outstr += ukey
             outstr += u"}\n"
@@ -164,8 +164,7 @@ def invoice_to_lco(invoice):
             int(float(n.num()) / n.denom())
         )  # choose best way to format numbers according to locale
 
-        line_str = u"\Artikel{"
-        line_str += un
+        line_str = u"\Artikel{" + un
         line_str += u"}{"
         line_str += descr
         line_str += u"}{"
@@ -271,12 +270,12 @@ def main(argv=None):
 
     if list_invoices:
         for number, invoice in enumerate(invoice_list):
-            print(str(number) + ")")
+            print(f"{str(number)})")
             print(invoice)
 
     if not (no_latex_output):
 
-        if invoice_number == None:
+        if invoice_number is None:
             print("Using the first invoice:")
             invoice_number = 0
 
@@ -286,11 +285,8 @@ def main(argv=None):
 
         lco_str = invoice_to_lco(invoice)
 
-        # Opening output file
-        f = open(output_file_name, "w")
-        f.write(lco_str)
-        f.close()
-
+        with open(output_file_name, "w") as f:
+            f.write(lco_str)
     if with_ipshell:
         app = TerminalIPythonApp.instance()
         app.initialize(argv=[])  # argv=[] instructs IPython to ignore sys.argv

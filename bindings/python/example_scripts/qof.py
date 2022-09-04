@@ -51,9 +51,9 @@ def createRandomTransactions(book, accountA, accountB):
 
         trans = Transaction(book)
         trans.BeginEdit()
-        trans.SetCurrency(currency)	
+        trans.SetCurrency(currency)
         trans.SetDate(randint(1,28), randint(1,12), randint(1900,2000))
-        trans.SetDescription("Transaction "+str(i))
+        trans.SetDescription(f"Transaction {str(i)}")
 
         value = randint(0,10000)
 
@@ -63,13 +63,13 @@ def createRandomTransactions(book, accountA, accountB):
         split1 = Split(book)
         split1.SetValue(value1)
         split1.SetAccount(accountA)
-        split1.SetMemo("A" + str(i))
+        split1.SetMemo(f"A{str(i)}")
         split1.SetParent(trans)
-       
+
         split2 = Split(book)
         split2.SetValue(value2)
         split2.SetAccount(accountB)
-        split2.SetMemo("B" + str(i))
+        split2.SetMemo(f"B{str(i)}")
         split2.SetParent(trans)
 
         trans.CommitEdit()
@@ -122,14 +122,17 @@ with Session(uri, SessionOpenMode.SESSION_NEW_STORE) as ses:
     #
     # get all transactions
     transactions_all = query_transactions(book)
-    print("Query all: " + str(len(transactions_all)) + " transactions.")
+    print(f"Query all: {len(transactions_all)} transactions.")
 
     # query date
     threshold = datetime.datetime(1950,1,1)
     QOF_DATE_MATCH_NORMAL = 2
     terms = [(['date-posted'], gnucash_core.QueryDatePredicate(QOF_COMPARE_GTE, QOF_DATE_MATCH_NORMAL, threshold), QOF_QUERY_AND)]
     transactions_2 = query_transactions(book, terms)
-    print("Query transactions with date > 1950: " + str(len(transactions_2)) + " (Should be about 50).")
+    print(
+        f"Query transactions with date > 1950: {len(transactions_2)} (Should be about 50)."
+    )
+
 
     # query description
     isRegex = False
@@ -162,4 +165,6 @@ with Session(uri, SessionOpenMode.SESSION_NEW_STORE) as ses:
     threshold = GncNumeric(5000, 100)
     terms = [(["amount"], gnucash_core.QueryNumericPredicate(QOF_COMPARE_GT, QOF_NUMERIC_MATCH_ANY, threshold), QOF_QUERY_AND)]
     splits_3 = query_splits(book, terms)
-    print("Query splits with amount > " + str(threshold) + ": " + str(len(splits_3)) + " (Should be about 100).")
+    print(
+        f"Query splits with amount > {str(threshold)}: {len(splits_3)} (Should be about 100)."
+    )

@@ -49,8 +49,8 @@ import datetime
 class GnuCashBusinessEntity(GnuCashCoreClass):
     def __init__(self, book=None, id=None, currency=None, name=None,
                  instance=None):
-        if instance == None:
-            if book==None or id==None or currency==None:
+        if instance is None:
+            if book is None or id is None or currency is None:
                 raise Exception(
                     "you must call GnuCashBusinessEntity.__init__ "
                     "with either a book, id, and currency, or an existing "
@@ -76,8 +76,8 @@ class Job(GnuCashBusinessEntity):
     # a currency but it does require an owner
     def __init__(self, book=None, id=None, owner=None, name=None,
                  instance=None):
-        if instance == None:
-            if book==None or id==None or owner==None:
+        if instance is None:
+            if book is None or id is None or owner is None:
                 raise Exception(
                     "you must call Job.__init__ "
                     "with either a book, id, and owner or an existing "
@@ -96,8 +96,8 @@ class BillTerm(GnuCashCoreClass): pass
 
 class TaxTable(GnuCashCoreClass):
     def __init__(self, book=None, name=None, first_entry=None, instance=None):
-        if instance == None:
-            if book==None or name==None or first_entry==None:
+        if instance is None:
+            if book is None or name is None or first_entry is None:
                 raise Exception(
                     "you must call TaxTable.__init__  with either a "
                     "book, name, and first_entry, or an existing "
@@ -123,8 +123,8 @@ class TaxTableEntry(GnuCashCoreClass):
         argument to a GncNumeric value as well.
         """
 
-        if instance == None:
-            if account==None:
+        if instance is None:
+            if account is None:
                 raise Exception(
                     "you must call TaxTableEntry.__init__  with either a "
                     "account or an existing "
@@ -152,8 +152,8 @@ class Invoice(GnuCashCoreClass):
         Optionally, you may provide a date the invoice is opened on
         (datetime.date or datetime.datetime), otherwise today's date is used.
         """
-        if instance == None:
-            if book==None or id==None or currency==None or owner==None:
+        if instance is None:
+            if book is None or id is None or currency is None or owner is None:
                 raise Exception(
                     "you must call Invoice.__init__ "
                     "with either a book, id, currency and owner, or an existing"
@@ -163,7 +163,7 @@ class Invoice(GnuCashCoreClass):
             self.SetID(id)
             self.SetCurrency(currency)
             self.SetOwner(owner)
-            if date_opened == None:
+            if date_opened is None:
                 date_opened = datetime.date.today()
             self.SetDateOpened(date_opened)
             self.CommitEdit()
@@ -203,15 +203,15 @@ class Entry(GnuCashCoreClass):
         By default, the entry will be set to today's date unless you
         override with the date argument.
         """
-        if instance == None:
-            if book==None:
+        if instance is None:
+            if book is None:
                 raise Exception(
                     "you must call Entry.__init__  with either a "
                     "book or an existing "
                     "low level swig proxy in the argument instance")
             GnuCashCoreClass.__init__(self, book)
 
-            if date == None:
+            if date is None:
                 date = datetime.date.today()
             self.SetDate(date)
             if invoice != None:
@@ -220,9 +220,9 @@ class Entry(GnuCashCoreClass):
             GnuCashCoreClass.__init__(self, instance=instance)
 
     def test_type(self, invoice):
-        if invoice.GetTypeString() == "Invoice" and self.GetInvoice() == None:
+        if invoice.GetTypeString() == "Invoice" and self.GetInvoice() is None:
             raise Exception("Entry type error. Check that Entry type matches Invoice.")
-        if invoice.GetTypeString() == "Bill" and self.GetBill() == None:
+        if invoice.GetTypeString() == "Bill" and self.GetBill() is None:
             raise Exception("Entry type error. Check that Entry type matches Bill.")
 
 # Owner

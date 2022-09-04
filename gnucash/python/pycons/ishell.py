@@ -20,7 +20,7 @@ from io import StringIO
 try:
     import IPython
 except Exception as e:
-    raise Exception("Error importing IPython (%s)" % str(e))
+    raise Exception(f"Error importing IPython ({str(e)})")
 
 
 # ------------------------------------------------------------------ class Shell

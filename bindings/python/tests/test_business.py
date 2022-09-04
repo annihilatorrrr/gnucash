@@ -13,7 +13,7 @@ class BusinessSession(BookSession):
     def setUp(self):
         BookSession.setUp(self)
 
-        self.today = datetime.today()
+        self.today = datetime.now()
 
         self.bank = Account(self.book)
         self.bank.SetType(ACCT_TYPE_BANK)

@@ -186,10 +186,9 @@ class ClassFromFunctions(object):
         """Add a group of functions with the same prefix, exclude methods
         in array exclude.
         """
-        for function_name, function_value, after_prefix in \
-                extract_attributes_with_prefix(cls._module, prefix):
+        for function_name, function_value, after_prefix in extract_attributes_with_prefix(cls._module, prefix):
 
-            if not (function_name in exclude):
+            if function_name not in exclude:
                 cls.add_method(function_name, after_prefix)
 
     @classmethod
@@ -233,10 +232,7 @@ def method_function_returns_instance(method_function, cls):
     assert( 'instance' == INSTANCE_ARGUMENT )
     def new_function(*args, **kargs):
         kargs_cls = { INSTANCE_ARGUMENT : method_function(*args, **kargs) }
-        if kargs_cls['instance'] == None:
-            return None
-        else:
-            return cls( **kargs_cls )
+        return None if kargs_cls['instance'] is None else cls( **kargs_cls )
 
     return new_function
 
@@ -287,7 +283,7 @@ def default_arguments_decorator(function, *args, **kargs):
             kargs_pos = kargs.pop("kargs_pos")
         new_argset = list(function_args)
         new_argset.extend(args[len(function_args) :])
-        new_kargset = {**kargs, **function_kargs}
+        new_kargset = kargs | function_kargs
         for karg_pos in kargs_pos:
             if karg_pos in new_kargset:
                 pos_karg = kargs_pos[karg_pos]
@@ -323,15 +319,14 @@ def default_arguments_decorator(function, *args, **kargs):
         new_function.__doc__ += "keyword argument defaults:\n"
         for karg in kargs:
             if karg != "kargs_pos":
-                new_function.__doc__ += (
-                    "  " + str(karg) + " = " + str(kargs[karg]) + "\n"
-                )
+                new_function.__doc__ += f"  {str(karg)} = {str(kargs[karg])}" + "\n"
         if kargs_pos:
             new_function.__doc__ += "keyword argument positions:\n"
             for karg in kargs_pos:
                 new_function.__doc__ += (
-                    "  " + str(karg) + " is at pos " + str(kargs_pos[karg]) + "\n"
+                    f"  {str(karg)} is at pos {str(kargs_pos[karg])}" + "\n"
                 )
+
     if len(args) or len(kargs):
         new_function.__doc__ += (
             "(defaults have been set by default_arguments_decorator method)"
@@ -343,10 +338,7 @@ def return_instance_if_value_has_it(value):
     """Return value.instance if value is an instance of ClassFromFunctions,
     else return value
     """
-    if isinstance(value, ClassFromFunctions):
-        return value.instance
-    else:
-        return value
+    return value.instance if isinstance(value, ClassFromFunctions) else value
 
 def process_list_convert_to_instance( value_list ):
     """Return a list built from value_list, where if a value is in an instance

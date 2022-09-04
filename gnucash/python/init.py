@@ -13,7 +13,7 @@ sys.path.append(os.path.dirname(__file__))
 # output file location if gnucash has been started with
 # gnucash --extra
 if gnc_prefs_is_extra_enabled():
-    print("Python shell init file: %s" % (__file__))
+    print(f"Python shell init file: {__file__}")
     print("\n" + "The following string should appear translated in your preferred language:" + "\n")
     print("\n" + _("Welcome to GnuCash") +"\n")
 
@@ -76,11 +76,9 @@ class Console (cons.Console):
             return True
         return cons.Console.key_press_event (self, widget, event)
 
-    def scroll_event (self, widget, event):
+    def scroll_event(self, widget, event):
         """ Scroll event """
-        if self.active_canvas:
-            return True
-        return False
+        return bool(self.active_canvas)
  
     def button_press_event (self, widget, event):
         """ Button press event """
@@ -107,27 +105,3 @@ class Console (cons.Console):
 # Change this to "if True:" to switch on a python console at gnucash
 # startup:
 # shelltype can either be "python" or "ipython" (the latter is not yet fully functional)
-if False:
-    shelltype = "python"
-    if shelltype=="python":
-        shelltypeName = "Python"
-    else:
-        shelltypeName = "IPython"
-    banner_style = 'title'
-    # TRANSLATORS: %s is either Python or IPython
-    banner = _("Welcome to GnuCash %s Shell") % shelltypeName
-    console = Console(argv = [], shelltype = shelltype, banner = [[banner, banner_style]], size = 100)
-
-    window = Gtk.Window(type = Gtk.WindowType.TOPLEVEL)
-    window.set_position(Gtk.WindowPosition.CENTER)
-    window.set_default_size(800,600)
-    window.set_border_width(0)
-
-    console = Console(argv = [], shelltype = shelltype, banner = [[banner, banner_style]],
-                            size = 100, user_local_ns=locals(), user_global_ns=globals())
-
-    window.connect('destroy-event', console.quit_event)
-    window.connect('delete-event', console.quit_event)
-    window.add (console)
-    window.show_all()
-    console.grab_focus()

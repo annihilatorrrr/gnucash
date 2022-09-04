@@ -220,7 +220,7 @@ def refresh(console):
         canvas.draw()
 
 # ----------------------------------------------------------------------- replot
-def replot (console):
+def replot(console):
     """
     Produces a replot of the last figure and insert it within console. Previous
     figure, if it exists, is transformed into a static image replica and
@@ -232,18 +232,15 @@ def replot (console):
     if not figures:
         if last_figure:
             insert (console, last_figure)
-            return
-        else:
-            return
+        return
     figure, canvas, anchor = figures[-1]
     if not anchor.get_deleted():
         replace (console, canvas, anchor)
         figures.remove ( (figure, canvas, anchor) )
-        #        insert (console, figure, canvas)
-        insert (console, figure)
     else:
-        console.figures = console.figures[0:-1]
-        insert (console, figure)
+        console.figures = console.figures[:-1]
+    #        insert (console, figure, canvas)
+    insert (console, figure)
     console.view.scroll_mark_onscreen(console.buffer.get_insert())
     while gtk.events_pending():
         gtk.main_iteration()
@@ -300,11 +297,9 @@ class Console (cons.Console):
             return True
         return cons.Console.key_press_event (self, widget, event)
 
-    def scroll_event (self, widget, event):
+    def scroll_event(self, widget, event):
         """ Scroll event """
-        if self.active_canvas:
-            return True
-        return False
+        return bool(self.active_canvas)
  
     def button_press_event (self, widget, event):
         """ Button press event """

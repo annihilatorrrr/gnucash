@@ -109,8 +109,7 @@ maxmemory = 1000
 def settings_filepath():
     userdir_url = PathSettings.UserConfig
     userdir = unohelper.fileUrlToSystemPath(userdir_url)
-    userfile = os.path.join(userdir, 'GnuCashFilePaths.txt')
-    return userfile
+    return os.path.join(userdir, 'GnuCashFilePaths.txt')
 
 def getGCFilename():
     global crout
@@ -126,7 +125,7 @@ def getDBFilename(default):
     crout = 'getDBFilename'
     global last_input_getDBFilename
 ##    last_input_getDBFilename = str(default) + '\n'
-    
+
     fp_write.Title = "Enter Database Filename"
     fp_write.MultiSelectionMode = False
     try:
@@ -142,10 +141,7 @@ def createDB(db_defaultname):
     global crout
     crout = 'createDB'
     global last_input_createDB
-##    last_input_createDB = str(db_defaultname)
-
-    fileurl=getDBFilename(db_defaultname)
-    if fileurl:
+    if fileurl := getDBFilename(db_defaultname):
         DB = Context.createInstance()
         DB.URL = "sdbc:embedded:hsqldb"
         DB.DatabaseDocument.storeAsURL(fileurl, ())
@@ -160,7 +156,7 @@ def createDB(db_defaultname):
 
 def exec_SetGnuCashFilePaths():
     """ Definition of data source and target files, creation of empty database """
-    
+
     global fp_read, fp_write
     global crout
     crout = 'SetGnuCashFilePaths'
@@ -172,27 +168,23 @@ def exec_SetGnuCashFilePaths():
     fp_write = smgr.createInstanceWithContext(
         "com.sun.star.ui.dialogs.OfficeFilePicker", ctx)
 
-    GCFileURL = getGCFilename()
-    if GCFileURL:
+    if GCFileURL := getGCFilename():
         GCFile = unohelper.fileUrlToSystemPath(GCFileURL)
     else:
         return None
-    settings = open(settings_filepath(), 'w')
-    entrance_line = settings_textentrance + set_macro + '\n'
-    settings.write(entrance_line)
-    settings.write(settings_textinp)
-    settings.write(GCFile.encode(lcodec) + '\n')
+    with open(settings_filepath(), 'w') as settings:
+        entrance_line = settings_textentrance + set_macro + '\n'
+        settings.write(entrance_line)
+        settings.write(settings_textinp)
+        settings.write(GCFile.encode(lcodec) + '\n')
 
-    gcfilename = os.path.basename(GCFile)
-    dbname = createDB(gcfilename)
-    if dbname:
-        settings.write(settings_textoutp)
-        settings.write(dbname.encode(lcodec) + '\n')
-    else:
-        return None
-    
-    settings.close()
-    
+        gcfilename = os.path.basename(GCFile)
+        if dbname := createDB(gcfilename):
+            settings.write(settings_textoutp)
+            settings.write(dbname.encode(lcodec) + '\n')
+        else:
+            return None
+
     MessageBox('A new Openoffice.org database has been created.\n' +
                'To fill with data please run macro "fillGnuCashDB."',
                MsgType="infobox")  
@@ -212,14 +204,8 @@ def read_filepaths():
             gcfile = lineparts[1].rstrip().decode(lcodec)
         elif lineparts[0] == settings_textoutp[:-2]:
             dbname = lineparts[1].rstrip().decode(lcodec)
-        else:
-            pass
-
     settings.close()
-    if gcfile == "" or dbname == "":
-        return []
-    else:
-        return [gcfile, dbname]
+    return [] if gcfile == "" or dbname == "" else [gcfile, dbname]
     
 # ***********************  TABLES ooo-DB **********************************
 
@@ -238,8 +224,7 @@ insert_account = """INSERT INTO ACCOUNT(
 def init_account():
     global crout
     crout = 'init_account'
-    account0 = {}.fromkeys(['name', 'id', 'type', 'description', 'parent'], '')
-    return account0
+    return {}.fromkeys(['name', 'id', 'type', 'description', 'parent'], '')
 
 
 # Definitions transaction: must be kept in sync
@@ -259,8 +244,7 @@ insert_trn = """INSERT INTO TRN(
 def init_trn():
     global crout
     crout = 'init_trn'
-    trn0 = {}.fromkeys(['id', 'num', 'description', 'date_ym', 'date_d'], '')
-    return trn0
+    return {}.fromkeys(['id', 'num', 'description', 'date_ym', 'date_d'], '')
 
 # Definitions for splits
 create_split = """ CREATE TABLE SPLIT (
@@ -277,8 +261,7 @@ insert_split = """INSERT INTO SPLIT(
 def init_split():
     global crout
     crout = 'init_split'
-    split0 = {}.fromkeys(['id', 'trn_id', 'value', 'quantity', 'account'], '')
-    return split0
+    return {}.fromkeys(['id', 'trn_id', 'value', 'quantity', 'account'], '')
 
 # Definitions for acct_tree, will be completed before execution
 create_accttree0 = """CREATE TABLE ACCTTREE (ID VARCHAR(256) NOT NULL"""
@@ -295,7 +278,7 @@ def createdelete(create_statement, table_name):
         Stmt.execute(create_statement)
     except:
         if table_name:
-            Stmt.execute("DELETE FROM " + table_name)
+            Stmt.execute(f"DELETE FROM {table_name}")
 
 def eval_fraction(cont):
     global crout
@@ -306,30 +289,29 @@ def eval_fraction(cont):
     l_split = cont.split('/')
     numerator = cont.split('/')[0]
     denominator = cont.split('/')[1]
-    if denominator.isdigit() and float(denominator) != 0:
-        floatnumber = float(numerator) / float(denominator)
-    else:
-        floatnumber = 0
-    return floatnumber
+    return (
+        float(numerator) / float(denominator)
+        if denominator.isdigit() and float(denominator) != 0
+        else 0
+    )
 
 def accounttree():
     global crout
     crout = 'accounttree'
     accrowlist = []
-    accrowdict = {}
     accrowsresult = Stmt.executeQuery("SELECT ID, PARENT, NAME, TYPE FROM ACCOUNT")
     while accrowsresult.next():
-        acc = []
-        for i in range(accrowsresult.Columns.Count):
-            acc.append(accrowsresult.getString(i + 1))
+        acc = [
+            accrowsresult.getString(i + 1)
+            for i in range(accrowsresult.Columns.Count)
+        ]
+
         accrowlist.append(acc)
-    for acc in accrowlist:
-        accrowdict.update({acc[0]: acc[1:]})
+    accrowdict = {acc[0]: acc[1:] for acc in accrowlist}
     hierarchy = []
     maxlvl = 0
-    for acc in accrowdict:
+    for acc, clist in accrowdict.items():
         namelist = []
-        clist = accrowdict[acc]
         while clist[0]:
             namelist.append(clist[1])
             clist = accrowdict[clist[0]]
@@ -458,7 +440,7 @@ class GCContent(sax.handler.ContentHandler):
             global crout
             global last_input_insert_statement
             crout = 'insert_statement'
-            last_input_insert_statement = str(kind.encode(lcodec)) + ' ' + str(value_dict)
+            last_input_insert_statement = f'{str(kind.encode(lcodec))} {str(value_dict)}'
             global insert_ct
             insert_ct = insert_ct + 1
             if insert_ct >= maxmemory:
@@ -495,7 +477,7 @@ class GCContent(sax.handler.ContentHandler):
             self.tbl = ''
             self.key = ''
         elif name == 'trn:date-posted':
-            self.trn['date_ym'] = self.date_posted[0:7]
+            self.trn['date_ym'] = self.date_posted[:7]
             self.trn['date_d'] = self.date_posted[8:10]
             self.status_date_posted = False
             self.date_posted = ''
@@ -576,15 +558,15 @@ def MessageBox(MsgText, MsgTitle="GnuCash to Ooo", MsgType="messbox", MsgButtons
             except AttributeError:               
                 ParentWin = doc.Frame.ContainerWindow
 
-    
+
     MsgType = MsgType.lower()
-    
+
     #available msg types
     MsgTypes = ("messbox", "infobox", "errorbox", "warningbox", "querybox")
-    
-    if not ( MsgType in MsgTypes ):
+
+    if MsgType not in MsgTypes:
         MsgType = "messbox"
-    
+
     #describe window properties.
     aDescriptor = WindowDescriptor()
     aDescriptor.Type = MODALTOP
@@ -593,14 +575,14 @@ def MessageBox(MsgText, MsgTitle="GnuCash to Ooo", MsgType="messbox", MsgButtons
     aDescriptor.Parent = ParentWin
     #aDescriptor.Bounds = Rectangle()
     aDescriptor.WindowAttributes = MsgButtons
-    
+
     tk = ParentWin.getToolkit()
     msgbox = tk.createWindow(aDescriptor)
-    
+
     msgbox.setMessageText(MsgText)
     if MsgTitle :
         msgbox.setCaptionText(MsgTitle)
-        
+
     return msgbox.execute()
 
 ##    callXray(DB)
@@ -632,12 +614,15 @@ def exec_fillGnuCashDB():
         MessageBox('Reading filepaths not successful.\n' +
             'Please run macro ' + '"' + set_macro + '"', MsgType="errorbox")
         return False
-        
+
     gcfile = filepaths[0]
     dbname = filepaths[1]
-    
-    answer = MessageBox('Update database ' + dbname +'?', MsgType = "querybox", MsgButtons=YES_NO)
-    if not answer == 2:          # 2 = YES, 3 = NO
+
+    answer = MessageBox(
+        f'Update database {dbname}?', MsgType="querybox", MsgButtons=YES_NO
+    )
+
+    if answer != 2:          # 2 = YES, 3 = NO
         return False
 
     global DB, Connection, Stmt
@@ -649,7 +634,7 @@ def exec_fillGnuCashDB():
     Connection=DB.connectWithCompletion(dbhandler)
     # create Statement object
     Stmt=Connection.createStatement()
-    
+
     # create base Tables
     createdelete(create_account, "ACCOUNT")
     createdelete(create_trn, "TRN")
@@ -693,18 +678,19 @@ def exec_fillGnuCashDB():
     DB.DatabaseDocument.store()
     # close connection   
     Connection.close()
-    MessageBox('Database ' + dbname + ' has been successfully updated.',
-           MsgType="infobox")
+    MessageBox(
+        f'Database {dbname} has been successfully updated.', MsgType="infobox"
+    )
 
 def issue_error_messages(args):
     logfile = settings_filepath()
-    settings = open(logfile, 'a')
-    entrance_line = '\nErrorlogging ' + time.ctime() + '\n'
-    settings.write(entrance_line)
-    strMsg = "Error! %s %s " % (args.__class__.__name__, args) + '\n'
-    settings.write(strMsg)
-    current_routine = 'current routine = ' + crout + '\n'
-    settings.write(current_routine)
+    with open(logfile, 'a') as settings:
+        entrance_line = '\nErrorlogging ' + time.ctime() + '\n'
+        settings.write(entrance_line)
+        strMsg = f"Error! {args.__class__.__name__} {args} " + '\n'
+        settings.write(strMsg)
+        current_routine = f'current routine = {crout}' + '\n'
+        settings.write(current_routine)
 ##    input_info = 'last input getDBFilename: ' + last_input_getDBFilename + '\n'
 ##    settings.write(input_info)
 ##    input_info = 'last input createDB: ' + last_input_createDB + '\n'
@@ -717,19 +703,22 @@ def issue_error_messages(args):
 ##    settings.write(input_info)
 ##    input_info = 'last input __init__: ' + last_input___init__ + '\n'
 ##    settings.write(input_info)
-    input_info = 'last input startElement: ' + last_input_startElement + '\n'
-    settings.write(input_info)
-    input_info = 'last input endElement: ' + last_input_endElement + '\n'
-    settings.write(input_info)
-    input_info = 'last input insert_statement: ' + last_input_insert_statement + '\n'
-    settings.write(input_info)
+        input_info = f'last input startElement: {last_input_startElement}' + '\n'
+        settings.write(input_info)
+        input_info = f'last input endElement: {last_input_endElement}' + '\n'
+        settings.write(input_info)
+        input_info = (
+            f'last input insert_statement: {last_input_insert_statement}'
+            + '\n'
+        )
+
+        settings.write(input_info)
 ##    input_info = 'last input characters: ' + last_input_characters + '\n'
 ##    settings.write(input_info)
 ##    input_info = 'last input MessageBox: ' + last_input_MessageBox + '\n'
 ##    settings.write(input_info)
-    strMsg = strMsg + 'For further information look into file\n' + logfile
-    MessageBox(strMsg, MsgType="errorbox")
-    settings.close()
+        strMsg = strMsg + 'For further information look into file\n' + logfile
+        MessageBox(strMsg, MsgType="errorbox")
     return
 
 

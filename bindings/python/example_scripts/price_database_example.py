@@ -41,11 +41,11 @@ cur = comm_table.lookup("CURRENCY", cur_mnemonic)
 cur_name = cur.get_fullname()
 
 
-if namespace_name != "":                    # Show single namespace
-  namespaces [ comm_table.find_namespace(namespace_name) ]
-
-else:                                 # Show all namespaces
+if not namespace_name:                                 # Show all namespaces
   namespaces=comm_table.get_namespaces_list()
+
+else:                    # Show single namespace
+  namespaces [ comm_table.find_namespace(namespace_name) ]
 
 for namespace in namespaces:
 
@@ -56,14 +56,14 @@ for namespace in namespaces:
   commodities=comm_table.get_commodities(namespace_name)
 
 
-  if len(commodities) == 0 :
+  if len(commodities) == 0:
 
-    print("No commodity in namespace "+namespace_name+".")
+    print(f"No commodity in namespace {namespace_name}.")
   else:
     if commodity_fullname:
       print("Searching commodity '"+commodity_fullname+"' in namespace "+namespace_name)
     else:
-      print("Commoditys in namespace "+namespace_name+":")
+      print(f"Commoditys in namespace {namespace_name}:")
 
 
     for i, c in enumerate(commodities):
@@ -71,7 +71,7 @@ for namespace in namespaces:
       c_fullname = c.get_fullname()
 
       if not(commodity_fullname) or (commodity_fullname == c_fullname):
-        print("["+str(i)+"] Full Name :", c.get_fullname())
+        print(f"[{str(i)}] Full Name :", c.get_fullname())
         if show_prices:
           pl = pdb.get_prices(c,cur)
 

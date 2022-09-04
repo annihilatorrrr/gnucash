@@ -38,20 +38,21 @@ def get_all_lots(account):
   return ltotal
 
 def get_all_invoices_from_lots(account):
-  """Return all invoices in account and descendants
+    """Return all invoices in account and descendants
 
   This is based on lots. So invoices without lots will be missed."""
 
-  lot_list=get_all_lots(account)
-  invoice_list=[]
-  for lot in lot_list:
-    if type(lot).__name__ == 'SwigPyObject':
-        lot = gnucash.GncLot(instance=lot)
+    lot_list=get_all_lots(account)
+    invoice_list=[]
+    for lot in lot_list:
+        if type(lot).__name__ == 'SwigPyObject':
+            lot = gnucash.GncLot(instance=lot)
 
-    invoice=gnucash.gnucash_core_c.gncInvoiceGetInvoiceFromLot(lot.instance)
-    if invoice:
-      invoice_list.append(Invoice(instance=invoice))
-  return invoice_list
+        if invoice := gnucash.gnucash_core_c.gncInvoiceGetInvoiceFromLot(
+            lot.instance
+        ):
+            invoice_list.append(Invoice(instance=invoice))
+    return invoice_list
 
 def get_all_invoices(book, is_paid=None, is_active=None):
     """Returns a list of all invoices in the book.
@@ -73,25 +74,16 @@ def get_all_invoices(book, is_paid=None, is_active=None):
         query.add_boolean_match([gnucash.INVOICE_IS_PAID], False, gnucash.QOF_QUERY_AND)
     elif is_paid == 1:
         query.add_boolean_match([gnucash.INVOICE_IS_PAID], True, gnucash.QOF_QUERY_AND)
-    elif is_paid == None:
-        pass
-
     # active = JOB_IS_ACTIVE
     if is_active == 0:
         query.add_boolean_match(['active'], False, gnucash.QOF_QUERY_AND)
     elif is_active == 1:
         query.add_boolean_match(['active'], True, gnucash.QOF_QUERY_AND)
-    elif is_active == None:
-        pass
-
     # return only invoices (1 = invoices)
     pred_data = gnucash.gnucash_core.QueryInt32Predicate(gnucash.QOF_COMPARE_EQUAL, 1)
     query.add_term([gnucash.INVOICE_TYPE], pred_data, gnucash.QOF_QUERY_AND)
 
-    invoice_list = []
-
-    for result in query.run():
-        invoice_list.append(Invoice(instance=result))
+    invoice_list = [Invoice(instance=result) for result in query.run()]
 
     query.destroy()
 
@@ -110,10 +102,7 @@ def get_all_customers(book):
     query.search_for('gncCustomer')
     query.set_book(book)
 
-    customer_list = []
-
-    for result in query.run():
-        customer_list.append(Customer(instance=result))
+    customer_list = [Customer(instance=result) for result in query.run()]
 
     query.destroy()
 

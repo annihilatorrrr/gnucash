@@ -267,8 +267,7 @@ class Session(GnuCashCoreClass):
         """A generator that yields any outstanding QofBackend errors
         """
         while self.get_error() is not ERR_BACKEND_NO_ERR:
-            error = self.pop_error()
-            yield error
+            yield self.pop_error()
 
     def pop_all_errors(self):
         """Returns any accumulated qof backend errors as a tuple
@@ -434,26 +433,26 @@ class GncNumeric(GnuCashCoreClass):
             elif isinstance(arg, str):
                 instance = gnc_numeric_zero()
                 if not string_to_gnc_numeric(arg, instance):
-                    raise TypeError('Failed to convert to GncNumeric: ' + str(args))
+                    raise TypeError(f'Failed to convert to GncNumeric: {str(args)}')
                 return instance
             elif isinstance(arg, GncNumeric):
                 return arg.instance
             else:
-                raise TypeError('Only single int/float/str/GncNumeric allowed: ' + str(args))
+                raise TypeError(f'Only single int/float/str/GncNumeric allowed: {str(args)}')
         elif len(args) == 2:
             if isinstance(args[0], int) and isinstance(args[1], int):
                 return gnc_numeric_create(*args)
             else:
-                raise TypeError('Only two ints allowed: ' + str(args))
+                raise TypeError(f'Only two ints allowed: {str(args)}')
         elif len(args) == 3:
             if isinstance(args[0], float) \
-                and isinstance(args[1], int) \
-                and type(args[2]) == type(GNC_HOW_DENOM_FIXED):
+                    and isinstance(args[1], int) \
+                    and type(args[2]) == type(GNC_HOW_DENOM_FIXED):
                 return double_to_gnc_numeric(*args)
             else:
-                raise TypeError('Only (float, int, GNC_HOW_RND_*) allowed: ' + str(args))
+                raise TypeError(f'Only (float, int, GNC_HOW_RND_*) allowed: {str(args)}')
         else:
-            raise TypeError('Required single int/float/str or two ints: ' + str(args))
+            raise TypeError(f'Required single int/float/str or two ints: {str(args)}')
 
     # from https://docs.python.org/3/library/numbers.html#numbers.Integral
     # and https://github.com/python/cpython/blob/3.7/Lib/fractions.py
@@ -468,7 +467,8 @@ class GncNumeric(GnuCashCoreClass):
                 return monomorphic_operator(a, GncNumeric(b))
             else:
                 return NotImplemented
-        forward.__name__ = '__' + fallback_operator.__name__ + '__'
+
+        forward.__name__ = f'__{fallback_operator.__name__}__'
         forward.__doc__ = monomorphic_operator.__doc__
 
         def reverse(b, a):
@@ -476,25 +476,26 @@ class GncNumeric(GnuCashCoreClass):
                 return forward(b, a)
             else:
                 return NotImplemented
-        reverse.__name__ = '__r' + fallback_operator.__name__ + '__'
+
+        reverse.__name__ = f'__r{fallback_operator.__name__}__'
         reverse.__doc__ = monomorphic_operator.__doc__
 
         return forward, reverse
 
-    def _add(a, b):
-        return a.add(b, GNC_DENOM_AUTO, GNC_HOW_RND_ROUND)
+    def _add(self, b):
+        return self.add(b, GNC_DENOM_AUTO, GNC_HOW_RND_ROUND)
 
-    def _sub(a, b):
-        return a.sub(b, GNC_DENOM_AUTO, GNC_HOW_RND_ROUND)
+    def _sub(self, b):
+        return self.sub(b, GNC_DENOM_AUTO, GNC_HOW_RND_ROUND)
 
-    def _mul(a, b):
-        return a.mul(b, GNC_DENOM_AUTO, GNC_HOW_RND_ROUND)
+    def _mul(self, b):
+        return self.mul(b, GNC_DENOM_AUTO, GNC_HOW_RND_ROUND)
 
-    def _div(a, b):
-        return a.div(b, GNC_DENOM_AUTO, GNC_HOW_RND_ROUND)
+    def _div(self, b):
+        return self.div(b, GNC_DENOM_AUTO, GNC_HOW_RND_ROUND)
 
-    def _floordiv(a, b):
-        return a.div(b, 1, GNC_HOW_RND_TRUNC)
+    def _floordiv(self, b):
+        return self.div(b, 1, GNC_HOW_RND_TRUNC)
 
     __add__, __radd__ = _operator_fallbacks(_add, operator.add)
     __iadd__ = __add__
@@ -508,20 +509,20 @@ class GncNumeric(GnuCashCoreClass):
     __ifloordiv__ = __floordiv__
 
     # Comparisons derived from https://github.com/python/cpython/blob/3.7/Lib/fractions.py
-    def _lt(a, b):
-        return a.compare(b) == -1
+    def _lt(self, b):
+        return self.compare(b) == -1
 
-    def _gt(a, b):
-        return a.compare(b) == 1
+    def _gt(self, b):
+        return self.compare(b) == 1
 
-    def _le(a, b):
-        return a.compare(b) in (0,-1)
+    def _le(self, b):
+        return self.compare(b) in (0,-1)
 
-    def _ge(a, b):
-        return a.compare(b) in (0,1)
+    def _ge(self, b):
+        return self.compare(b) in (0,1)
 
-    def _eq(a, b):
-        return a.compare(b) == 0
+    def _eq(self, b):
+        return self.compare(b) == 0
 
     def _richcmp(self, other, op):
         """Helper for comparison operators, for internal use only.
@@ -540,29 +541,29 @@ class GncNumeric(GnuCashCoreClass):
         else:
             return NotImplemented
 
-    def __lt__(a, b):
+    def __lt__(self, b):
         """a < b"""
-        return a._richcmp(b, a._lt)
+        return self._richcmp(b, self._lt)
 
-    def __gt__(a, b):
+    def __gt__(self, b):
         """a > b"""
-        return a._richcmp(b, a._gt)
+        return self._richcmp(b, self._gt)
 
-    def __le__(a, b):
+    def __le__(self, b):
         """a <= b"""
-        return a._richcmp(b, a._le)
+        return self._richcmp(b, self._le)
 
-    def __ge__(a, b):
+    def __ge__(self, b):
         """a >= b"""
-        return a._richcmp(b, a._ge)
+        return self._richcmp(b, self._ge)
 
-    def __eq__(a, b):
+    def __eq__(self, b):
         """a == b"""
-        return a._richcmp(b, a._eq)
+        return self._richcmp(b, self._eq)
 
-    def __bool__(a):
+    def __bool__(self):
         """a != 0"""
-        return bool(a.num())
+        return bool(self.num())
 
     def __float__(self):
         return self.to_double()
@@ -570,17 +571,17 @@ class GncNumeric(GnuCashCoreClass):
     def __int__(self):
         return int(self.to_double())
 
-    def __pos__(a):
+    def __pos__(self):
         """+a"""
-        return GncNumeric(a.num(), a.denom())
+        return GncNumeric(self.num(), self.denom())
 
-    def __neg__(a):
+    def __neg__(self):
         """-a"""
-        return a.neg()
+        return self.neg()
 
-    def __abs__(a):
+    def __abs__(self):
         """abs(a)"""
-        return a.abs()
+        return self.abs()
 
     def to_fraction(self):
         from fractions import Fraction
@@ -784,10 +785,12 @@ for error_name, error_value, error_name_after_prefix in \
     this_module_dict[ error_name ] = error_value
 
 #backend error codes used for reverse lookup
-backend_error_dict = {}
-for error_name, error_value, error_name_after_prefix in \
-    extract_attributes_with_prefix(gnucash_core_c, 'ERR_'):
-    backend_error_dict[ error_value ] = error_name
+backend_error_dict = {
+    error_value: error_name
+    for error_name, error_value, error_name_after_prefix in extract_attributes_with_prefix(
+        gnucash_core_c, 'ERR_'
+    )
+}
 
 # GncNumeric denominator computation schemes
 # Used for the denom argument in arithmetic functions like GncNumeric.add
@@ -1016,7 +1019,6 @@ guid_dict = {
             }
 methods_return_instance(GUID, guid_dict)
 
-#GUIDString
 class GUIDString(GnuCashCoreClass):
     pass
 

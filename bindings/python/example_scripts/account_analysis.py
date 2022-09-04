@@ -76,10 +76,7 @@ ZERO = Decimal(0)
 
 def gnc_numeric_to_python_Decimal(numeric):
     negative = numeric.negative_p()
-    if negative:
-        sign = 1
-    else:
-        sign = 0
+    sign = 1 if negative else 0
     copy = GncNumeric(numeric.num(), numeric.denom())
     result = copy.to_decimal(None)
     if not result:
@@ -116,8 +113,10 @@ def next_period_start(start_year, start_month, period_type):
 
 def period_end(start_year, start_month, period_type):
     if period_type not in PERIODS:
-        raise Exception("%s is not a valid period, should be %s" % (
-                period_type, str(list(PERIODS.keys())) ) )
+        raise Exception(
+            f"{period_type} is not a valid period, should be {list(PERIODS.keys())}"
+        )
+
 
     end_year, end_month = next_period_start(start_year, start_month,
                                             period_type)
@@ -129,18 +128,18 @@ def period_end(start_year, start_month, period_type):
 
 
 def generate_period_boundaries(start_year, start_month, period_type, periods):
-    for i in range(periods):
+    for _ in range(periods):
         yield ( date(start_year, start_month, 1),
                 period_end(start_year, start_month, period_type) )
         start_year, start_month = next_period_start(start_year, start_month,
                                                     period_type)
 
 def account_from_path(top_account, account_path, original_path=None):
-    if original_path==None: original_path = account_path
+    if original_path is None: original_path = account_path
     account, account_path = account_path[0], account_path[1:]
 
     account = top_account.lookup_by_name(account)
-    if account == None:
+    if account is None:
         raise Exception(
             "path " + ''.join(original_path) + " could not be found")
     if len(account_path) > 0 :
@@ -205,8 +204,7 @@ def main():
             # ignore transactions with a date before the matching period start
             # (after subtracting 1 above start_index would be -1)
             # and after the last period_end
-            if period_index >= 0 and \
-                    trans_date <= period_list[len(period_list)-1][1]:
+            if period_index >= 0 and trans_date <= period_list[-1][1]:
 
                 # get the period bucket appropriate for the split in question
                 period = period_list[period_index]
@@ -224,12 +222,7 @@ def main():
                 split_amount = gnc_numeric_to_python_Decimal(split.GetAmount())
 
                 # if the amount is negative, this is a credit
-                if split_amount < ZERO:
-                    debit_credit_offset = 1
-                # else a debit
-                else:
-                    debit_credit_offset = 0
-
+                debit_credit_offset = 1 if split_amount < ZERO else 0
                 # store the debit or credit Split with its transaction, using the
                 # above offset to get in the right bucket
                 #

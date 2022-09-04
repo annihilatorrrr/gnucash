@@ -8,7 +8,7 @@ from gnucash import (
 
 FILE_1 = "/tmp/example.gnucash"
 
-with Session("xml://%s" % FILE_1, SessionOpenMode.SESSION_NEW_STORE) as session:
+with Session(f"xml://{FILE_1}", SessionOpenMode.SESSION_NEW_STORE) as session:
 
     book = session.book
     root_acct = Account(book)
